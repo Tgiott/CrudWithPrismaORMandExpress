@@ -1,31 +1,25 @@
 import dotenv from "dotenv"
+import fastify from "fastify";
+import cors from '@fastify/cors'
+import morgan from "morgan";
+import { createUser, getUserById } from "./routes/users/users";
 
+dotenv.config();
 
-// OUR ORM FRAMEWORK 
-import { PrismaClient } from "@prisma/client";
 
 
 // REQUEST LOGGER
-import morgan from "morgan";
+const app  = fastify();
 
-// EXPRESS 
-import express, { Application } from "express";
-
-// Routes
-import { route } from "./routes";
-
-dotenv.config();
-const app: Application  = express();
+app.register(cors,  {
+  origin: true
+})
 
 
-
-app.use(express.json());
-app.use(morgan('tiny'));
-app.use(route);
-
-const PORT = process.env.PORT || 8000;
+app.register(createUser);
+app.register(getUserById);
 
 
-app.listen(PORT, () => {
-  console.log( `Server running on port ${PORT}`)
-});
+app.listen({
+  port: 3333
+})
