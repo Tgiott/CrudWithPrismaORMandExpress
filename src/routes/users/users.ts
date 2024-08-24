@@ -7,37 +7,35 @@ import { z } from "zod";
 //import nodemailer from 'nodemailer';
 
 import { userToCreateDTO } from "../../validation/user.schemas";
-import { prisma } from "../../database/prisma";
-
+import { Prisma } from "../../database/prisma";
 
 export async function createUser(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().post("/users",
-    {
-        schema: {
-            body: z.object( {
-              name: z.string(),
-              email: z.string(),
-              password: z.string(),
-              confirmPassword: z.string()
-          })
-          
-        }
+
+
+  app.withTypeProvider<ZodTypeProvider>().post("/users", {
+    schema: {
+      body: userToCreateDTO, 
     },
-    async (request, reply) => {
+  }, async (request, reply) => {
+    try {
+      const { name, email, password } = request.body; 
+      const user = await Prisma.user.create({
+        data: {
+          name,
+          email,
+          password, 
+        },
+      });
 
-        const {name,email, password, confirmPassword} = request.body
-
-       const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password  
-            }
-        })
-
-      return reply.redirect(`http://localhost:3000/users/${user.id}`)
+      return {
+        created: true,
+        uri: `http://localhost:3333/users/${user.id}`
+      }
+    } catch (error) {
+      console.error(error);
+    // return reply.internalServerError('An error occurred while creating the user.');
     }
-  )
+  });
 }
 
 export async function getUserById(app: FastifyInstance) {
@@ -52,13 +50,48 @@ export async function getUserById(app: FastifyInstance) {
     async (request) => {
       
       const {userId}  = request.params
-     const user = await prisma.user.findUnique(
+     const user = await Prisma.user.findUnique(
           {where: {
               id: userId
-          }}
+          },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+        }}
       )
 
       return {user}
+    },
+  );
+}
+
+
+export async function getAllUsersAsResource(app: FastifyInstance) {
+  app.withTypeProvider<ZodTypeProvider>().get("/users", async (request) => {
+      
+     const result = await Prisma.user.findMany(
+      {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+        }}
+      )
+
+      const users  = result.map( (user) => {
+            return {
+              userId: user.id,
+              email: user.email,
+              uri: `http://localhost:3333/users/${user.id}`
+            }
+      }) 
+
+      return {users}
     },
   );
 }
