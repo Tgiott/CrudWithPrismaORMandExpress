@@ -36,7 +36,7 @@ To get started with this template, you just need to follow these simple steps:
 1. Clone the repository:
 
    ```
-   git clone https://github.com/Tgiott/CrudWithPrismaORMandExpress.git
+   git clone https://github.com/Tgiott/CrudWithPrismaORMandFastify.git
    ```
 
 2. Install dependencies:
